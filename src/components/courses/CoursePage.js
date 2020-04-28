@@ -7,11 +7,17 @@ import { bindActionCreators } from "redux";
 import CourseList from "./CourseList";
 import { Redirect } from "react-router-dom";
 import { toast } from "react-toastify";
+import { sortCoursesByTitle } from "../../redux/selectors/courseSelector";
 
 class CoursePage extends React.Component {
-  state = {
-    redirectToAddCoursePage: false,
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      redirectToAddCoursePage: false,
+      courses: this.props.courses,
+    };
+  }
+
   componentDidMount() {
     const { courses, authors, actions } = this.props;
     if (courses.length === 0) {
@@ -27,6 +33,28 @@ class CoursePage extends React.Component {
     }
   }
 
+  componentDidUpdate(prevProps) {
+    if (prevProps.courses !== this.props.courses)
+      this.setState((state, props) => ({
+        ...state,
+        courses: props.courses,
+      }));
+  }
+
+  filterByAuthor = ({ target }) => {
+    this.setState((state, props) => ({
+      ...state,
+      courses: props.courses,
+    }));
+
+    this.setState((state) => ({
+      ...state,
+      courses: state.courses.filter(
+        (course) => course.authorName === target.value
+      ),
+    }));
+  };
+
   handleDelete = (course) => {
     this.props.actions
       .deleteCourse(course.id)
@@ -36,30 +64,43 @@ class CoursePage extends React.Component {
       );
   };
 
-  //   handleChange = (event) => {
-  //     const course = { ...this.state.course, title: event.target.value };
-  //     this.setState({ course });
-  //   };
-
-  //   handleSubmit = (event) => {
-  //     event.preventDefault();
-  //     this.props.actions.createCourse(this.state.course);
-  //   };
-
   render() {
     return (
       <>
         {this.state.redirectToAddCoursePage && <Redirect to="/course" />}
         <h2>Courses</h2>
-        <button
-          style={{ marginBottom: 20 }}
-          className="btn btn-primary add-course"
-          onClick={() => this.setState({ redirectToAddCoursePage: true })}
-        >
-          Add CourseList
-        </button>
+        <div className="row">
+          <div className="col-sm-4">
+            <button
+              style={{ marginBottom: 20 }}
+              className="btn btn-primary add-course"
+              onClick={() => this.setState({ redirectToAddCoursePage: true })}
+            >
+              Add CourseList
+            </button>
+          </div>
+          <div className="col-sm-4">
+            <div className="form-group">
+              <select
+                style={{ marginBottom: 20 }}
+                className="form-control"
+                onChange={this.filterByAuthor}
+              >
+                <option value="">Change Author</option>
+                {this.props.authors.map((author) => {
+                  return (
+                    <option key={author.name} value={author.name}>
+                      {author.name}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
+        </div>
+
         <CourseList
-          courses={this.props.courses}
+          courses={this.state.courses}
           onDeleteClick={this.handleDelete}
         />
       </>
@@ -78,12 +119,14 @@ function mapStateToProps({ courses, authors }) {
     courses:
       authors.length === 0
         ? []
-        : courses.map((course) => {
-            return {
-              ...course,
-              authorName: authors.find((a) => a.id === course.authorId).name,
-            };
-          }),
+        : sortCoursesByTitle(
+            courses.map((course) => {
+              return {
+                ...course,
+                authorName: authors.find((a) => a.id === course.authorId).name,
+              };
+            })
+          ),
     authors,
   };
 }
