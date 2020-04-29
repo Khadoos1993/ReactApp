@@ -1,6 +1,7 @@
 import React from "react";
 import { render } from "react-dom";
-import { BrowserRouter as Router } from "react-router-dom";
+import { BrowserRouter as Router, Route } from "react-router-dom";
+
 import "bootstrap/dist/css/bootstrap.min.css";
 import App from "./components/App.js";
 import "./index.css";
@@ -12,7 +13,7 @@ const store = configureStore();
 render(
   <ReduxProvider store={store}>
     <Router>
-      <App />
+      <Route component={App} />
     </Router>
   </ReduxProvider>,
   document.getElementById("app")
